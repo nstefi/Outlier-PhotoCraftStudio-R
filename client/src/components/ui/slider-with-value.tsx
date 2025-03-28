@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 
@@ -26,36 +26,46 @@ export default function SliderWithValue({
   // Use a ref to track if we're currently dragging
   const isDraggingRef = useRef(false);
   
-  // Only update from props when not dragging
+  // Track the last committed value to prevent unnecessary updates
+  const lastCommittedValueRef = useRef(value);
+  
+  // Only update from props when not dragging and value has changed significantly
   useEffect(() => {
-    if (!isDraggingRef.current) {
+    if (!isDraggingRef.current && Math.abs(value - lastCommittedValueRef.current) >= 1) {
       setLocalValue(value);
+      lastCommittedValueRef.current = value;
     }
   }, [value]);
   
   // Handle slider change without immediate parent update during dragging
-  const handleValueChange = (values: number[]) => {
-    const newValue = values[0];
+  const handleValueChange = useCallback((values: number[]) => {
+    const newValue = Math.round(values[0]); // Always round to prevent decimal shaking
     setLocalValue(newValue);
     
     // Only call parent onChange when we've stopped dragging
     if (!isDraggingRef.current) {
       onChange(newValue);
+      lastCommittedValueRef.current = newValue;
     }
-  };
+  }, [onChange]);
   
-  const handleSliderDragStart = () => {
+  const handleSliderDragStart = useCallback(() => {
     isDraggingRef.current = true;
-  };
+  }, []);
   
-  const handleSliderDragEnd = () => {
+  const handleSliderDragEnd = useCallback(() => {
     isDraggingRef.current = false;
     // Now that dragging is done, send the final value to parent
-    onChange(localValue);
-  };
+    const roundedValue = Math.round(localValue);
+    onChange(roundedValue);
+    lastCommittedValueRef.current = roundedValue;
+  }, [localValue, onChange]);
   
   // Format the displayed value to avoid decimals that cause visual shaking
-  const displayValue = Math.round(localValue);
+  const displayValue = useMemo(() => Math.round(localValue), [localValue]);
+  
+  // Memoize slider value to prevent unnecessary rerenders
+  const sliderValue = useMemo(() => [localValue], [localValue]);
   
   return (
     <div className="adjustment-control">
@@ -70,11 +80,10 @@ export default function SliderWithValue({
         min={min}
         max={max}
         step={step}
-        value={[localValue]}
+        value={sliderValue}
         onValueChange={handleValueChange}
         onValueCommit={(value) => {
           handleSliderDragEnd();
-          onChange(value[0]);
         }}
         onPointerDown={handleSliderDragStart}
         className="slider w-full"

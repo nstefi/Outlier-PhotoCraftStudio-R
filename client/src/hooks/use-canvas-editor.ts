@@ -70,7 +70,7 @@ export function useCanvasEditor() {
     // Skip if no layers
     if (layers.length === 0) return;
     
-    // Process layers from bottom to top (first to last)
+    // Process layers from bottom to top (last to first in our array)
     // Create a temporary canvas for each layer
     const tempCanvas = document.createElement("canvas");
     tempCanvas.width = canvas.width;
@@ -81,8 +81,9 @@ export function useCanvasEditor() {
     // Start with a blank canvas
     let compositedImageData = ctx.createImageData(canvas.width, canvas.height);
     
-    // Process each layer
-    for (const layer of layers) {
+    // Process each layer from bottom to top - reversed from our layers array order
+    // In our model, layers[0] is the top layer, layers[layers.length-1] is the bottom
+    for (const layer of [...layers].reverse()) {
       if (!layer.visible || !layer.image) continue;
       
       // Clear temp canvas

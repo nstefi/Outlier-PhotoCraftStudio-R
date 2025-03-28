@@ -65,7 +65,9 @@ export default function LayerList({
           </div>
         ) : (
           <div className="p-2 space-y-2">
-            {layers.map((layer, index) => (
+            {/* Display layers in reverse order for visual representation in UI
+                The first layer in the array is the top layer visually */}
+            {[...layers].map((layer, index) => (
               <div 
                 key={layer.id}
                 className={`p-2 rounded-md border transition-colors ${
@@ -162,7 +164,11 @@ export default function LayerList({
                         max={100} 
                         step={1}
                         className="py-0"
-                        onValueChange={(value) => onOpacityChange(layer.id, value[0])}
+                        onValueChange={(value) => {
+                          // Only apply changes on value commit or when slider is not being dragged
+                          const newValue = Math.round(value[0]);
+                          onOpacityChange(layer.id, newValue);
+                        }}
                       />
                     </div>
                   </div>

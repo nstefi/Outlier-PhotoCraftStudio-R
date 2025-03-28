@@ -1,4 +1,127 @@
-import { ImageFilter, ImageAdjustments } from "@shared/schema";
+import { ImageFilter, ImageAdjustments, BlendMode } from "@shared/schema";
+
+// Helper function to apply blend modes between layers
+export function applyBlendMode(
+  ctx: CanvasRenderingContext2D,
+  baseImageData: ImageData,
+  topImageData: ImageData,
+  blendMode: BlendMode
+): ImageData {
+  const result = new ImageData(
+    new Uint8ClampedArray(baseImageData.data),
+    baseImageData.width,
+    baseImageData.height
+  );
+  
+  const baseData = baseImageData.data;
+  const topData = topImageData.data;
+  const resultData = result.data;
+  
+  for (let i = 0; i < baseData.length; i += 4) {
+    const r1 = baseData[i];
+    const g1 = baseData[i + 1];
+    const b1 = baseData[i + 2];
+    const a1 = baseData[i + 3] / 255;
+    
+    const r2 = topData[i];
+    const g2 = topData[i + 1];
+    const b2 = topData[i + 2];
+    const a2 = topData[i + 3] / 255;
+    
+    let r, g, b;
+    
+    switch (blendMode) {
+      case 'normal':
+        r = r2;
+        g = g2;
+        b = b2;
+        break;
+      case 'multiply':
+        r = (r1 * r2) / 255;
+        g = (g1 * g2) / 255;
+        b = (b1 * b2) / 255;
+        break;
+      case 'screen':
+        r = 255 - ((255 - r1) * (255 - r2)) / 255;
+        g = 255 - ((255 - g1) * (255 - g2)) / 255;
+        b = 255 - ((255 - b1) * (255 - b2)) / 255;
+        break;
+      case 'overlay':
+        r = r1 < 128 ? (2 * r1 * r2) / 255 : 255 - (2 * (255 - r1) * (255 - r2)) / 255;
+        g = g1 < 128 ? (2 * g1 * g2) / 255 : 255 - (2 * (255 - g1) * (255 - g2)) / 255;
+        b = b1 < 128 ? (2 * b1 * b2) / 255 : 255 - (2 * (255 - b1) * (255 - b2)) / 255;
+        break;
+      case 'darken':
+        r = Math.min(r1, r2);
+        g = Math.min(g1, g2);
+        b = Math.min(b1, b2);
+        break;
+      case 'lighten':
+        r = Math.max(r1, r2);
+        g = Math.max(g1, g2);
+        b = Math.max(b1, b2);
+        break;
+      case 'color-dodge':
+        r = r1 === 0 ? 0 : r2 === 255 ? 255 : Math.min(255, (r1 * 255) / (255 - r2));
+        g = g1 === 0 ? 0 : g2 === 255 ? 255 : Math.min(255, (g1 * 255) / (255 - g2));
+        b = b1 === 0 ? 0 : b2 === 255 ? 255 : Math.min(255, (b1 * 255) / (255 - b2));
+        break;
+      case 'color-burn':
+        r = r1 === 255 ? 255 : r2 === 0 ? 0 : Math.max(0, 255 - ((255 - r1) * 255) / r2);
+        g = g1 === 255 ? 255 : g2 === 0 ? 0 : Math.max(0, 255 - ((255 - g1) * 255) / g2);
+        b = b1 === 255 ? 255 : b2 === 0 ? 0 : Math.max(0, 255 - ((255 - b1) * 255) / b2);
+        break;
+      case 'hard-light':
+        r = r2 < 128 ? (2 * r2 * r1) / 255 : 255 - (2 * (255 - r2) * (255 - r1)) / 255;
+        g = g2 < 128 ? (2 * g2 * g1) / 255 : 255 - (2 * (255 - g2) * (255 - g1)) / 255;
+        b = b2 < 128 ? (2 * b2 * b1) / 255 : 255 - (2 * (255 - b2) * (255 - b1)) / 255;
+        break;
+      case 'soft-light':
+        r = r2 < 128 ? 2 * r1 * r2 / 255 + r1 * r1 * (1 - 2 * r2 / 255) / 255 : 2 * r1 * (255 - r2) / 255 + Math.sqrt(r1 / 255) * (2 * r2 - 255);
+        g = g2 < 128 ? 2 * g1 * g2 / 255 + g1 * g1 * (1 - 2 * g2 / 255) / 255 : 2 * g1 * (255 - g2) / 255 + Math.sqrt(g1 / 255) * (2 * g2 - 255);
+        b = b2 < 128 ? 2 * b1 * b2 / 255 + b1 * b1 * (1 - 2 * b2 / 255) / 255 : 2 * b1 * (255 - b2) / 255 + Math.sqrt(b1 / 255) * (2 * b2 - 255);
+        break;
+      case 'difference':
+        r = Math.abs(r1 - r2);
+        g = Math.abs(g1 - g2);
+        b = Math.abs(b1 - b2);
+        break;
+      case 'exclusion':
+        r = r1 + r2 - (2 * r1 * r2) / 255;
+        g = g1 + g2 - (2 * g1 * g2) / 255;
+        b = b1 + b2 - (2 * b1 * b2) / 255;
+        break;
+      // Advanced blend modes (simplified approximations)
+      case 'hue':
+      case 'saturation':
+      case 'color':
+      case 'luminosity':
+        // For these complex blend modes, we'll use a simpler approximation
+        // In a real app, we'd implement full HSL conversions
+        r = (r1 + r2) / 2;
+        g = (g1 + g2) / 2;
+        b = (b1 + b2) / 2;
+        break;
+      default:
+        r = r2;
+        g = g2;
+        b = b2;
+    }
+    
+    // Alpha compositing
+    const a = a1 + a2 - a1 * a2;
+    
+    // Apply the blend result only where the top layer is visible
+    if (a2 > 0) {
+      resultData[i] = Math.round(r);
+      resultData[i + 1] = Math.round(g);
+      resultData[i + 2] = Math.round(b);
+      resultData[i + 3] = Math.round(a * 255);
+    }
+  }
+  
+  return result;
+}
 
 export function applyFilter(
   ctx: CanvasRenderingContext2D,

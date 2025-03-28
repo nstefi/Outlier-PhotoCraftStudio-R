@@ -34,6 +34,28 @@ export const imageFilterTypes = [
 
 export type ImageFilter = typeof imageFilterTypes[number];
 
+// Define blend modes for layers
+export const blendModeTypes = [
+  'normal',
+  'multiply',
+  'screen',
+  'overlay',
+  'darken',
+  'lighten',
+  'color-dodge',
+  'color-burn',
+  'hard-light',
+  'soft-light',
+  'difference',
+  'exclusion',
+  'hue',
+  'saturation',
+  'color',
+  'luminosity',
+] as const;
+
+export type BlendMode = typeof blendModeTypes[number];
+
 export interface ImageAdjustments {
   brightness: number;
   contrast: number;
@@ -47,4 +69,21 @@ export interface ImageInfo {
   height: number;
   size: number;
   filename: string;
+}
+
+// Layer related types
+export interface Layer {
+  id: string;
+  name: string;
+  visible: boolean;
+  opacity: number;
+  image: HTMLImageElement | null;
+  filter: ImageFilter;
+  adjustments: ImageAdjustments;
+  blendMode: BlendMode;
+  position: {
+    x: number;
+    y: number;
+  };
+  scale: number;
 }

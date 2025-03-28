@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 
@@ -23,17 +23,39 @@ export default function SliderWithValue({
   // Use a local state to prevent shaking during drag
   const [localValue, setLocalValue] = useState(value);
   
-  // Update local value when prop value changes (except during dragging)
+  // Use a ref to track if we're currently dragging
+  const isDraggingRef = useRef(false);
+  
+  // Only update from props when not dragging
   useEffect(() => {
-    setLocalValue(value);
+    if (!isDraggingRef.current) {
+      setLocalValue(value);
+    }
   }, [value]);
   
-  // Handle slider change with debounce
+  // Handle slider change without immediate parent update during dragging
   const handleValueChange = (values: number[]) => {
     const newValue = values[0];
     setLocalValue(newValue);
-    onChange(newValue);
+    
+    // Only call parent onChange when we've stopped dragging
+    if (!isDraggingRef.current) {
+      onChange(newValue);
+    }
   };
+  
+  const handleSliderDragStart = () => {
+    isDraggingRef.current = true;
+  };
+  
+  const handleSliderDragEnd = () => {
+    isDraggingRef.current = false;
+    // Now that dragging is done, send the final value to parent
+    onChange(localValue);
+  };
+  
+  // Format the displayed value to avoid decimals that cause visual shaking
+  const displayValue = Math.round(localValue);
   
   return (
     <div className="adjustment-control">
@@ -41,7 +63,7 @@ export default function SliderWithValue({
         <Label htmlFor={`${label}Range`} className="text-sm font-medium text-gray-700">
           {label}
         </Label>
-        <span className="text-xs text-gray-500">{Math.round(localValue)}</span>
+        <span className="text-xs text-gray-500">{displayValue}</span>
       </div>
       <Slider
         id={`${label}Range`}
@@ -50,6 +72,11 @@ export default function SliderWithValue({
         step={step}
         value={[localValue]}
         onValueChange={handleValueChange}
+        onValueCommit={(value) => {
+          handleSliderDragEnd();
+          onChange(value[0]);
+        }}
+        onPointerDown={handleSliderDragStart}
         className="slider w-full"
       />
     </div>

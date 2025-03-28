@@ -15,11 +15,15 @@ import { RefreshCw, Upload, Layers } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Home() {
+  // Step 1: Define all state hooks first to maintain consistent order
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageInfo, setImageInfo] = useState<ImageInfo | null>(null);
   const [showLoading, setShowLoading] = useState(false);
+  
+  // Step 2: Define all refs after state hooks
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Step 3: Define custom hooks after refs
   const {
     canvasRef,
     canvasWidth,
@@ -50,6 +54,7 @@ export default function Home() {
     handleCanvasClick,
   } = useCanvasEditor();
 
+  // Step 4: Define handler functions after all hooks
   const handleFileSelect = async (file: File) => {
     if (!file) return;
     

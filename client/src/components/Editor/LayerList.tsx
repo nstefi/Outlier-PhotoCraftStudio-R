@@ -99,10 +99,10 @@ export default function LayerList({
                         onMoveLayerUp(layer.id);
                       }}
                       className="text-gray-500 hover:text-gray-700"
-                      disabled={index === layers.length - 1}
+                      disabled={index === 0}
                       title="Move up"
                     >
-                      <ChevronUp className={`h-4 w-4 ${index === layers.length - 1 ? 'opacity-30' : ''}`} />
+                      <ChevronUp className={`h-4 w-4 ${index === 0 ? 'opacity-30' : ''}`} />
                     </button>
                     <button
                       onClick={(e) => {
@@ -110,10 +110,10 @@ export default function LayerList({
                         onMoveLayerDown(layer.id);
                       }}
                       className="text-gray-500 hover:text-gray-700"
-                      disabled={index === 0}
+                      disabled={index === layers.length - 1}
                       title="Move down"
                     >
-                      <ChevronDown className={`h-4 w-4 ${index === 0 ? 'opacity-30' : ''}`} />
+                      <ChevronDown className={`h-4 w-4 ${index === layers.length - 1 ? 'opacity-30' : ''}`} />
                     </button>
                     <button
                       onClick={(e) => {

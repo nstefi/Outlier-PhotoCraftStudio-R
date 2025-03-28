@@ -125,22 +125,8 @@ export function useLayers() {
   }, []);
   
   // Move layer up in the stack (later in the array = higher in the stack)
+  // Note: In our UI, "up" means visually higher in the stack (lower index in array)
   const moveLayerUp = useCallback((layerId: string) => {
-    setLayers((prevLayers) => {
-      const index = prevLayers.findIndex((layer) => layer.id === layerId);
-      if (index === -1 || index === prevLayers.length - 1) return prevLayers;
-      
-      const newLayers = [...prevLayers];
-      const temp = newLayers[index];
-      newLayers[index] = newLayers[index + 1];
-      newLayers[index + 1] = temp;
-      
-      return newLayers;
-    });
-  }, []);
-  
-  // Move layer down in the stack (earlier in the array = lower in the stack)
-  const moveLayerDown = useCallback((layerId: string) => {
     setLayers((prevLayers) => {
       const index = prevLayers.findIndex((layer) => layer.id === layerId);
       if (index <= 0) return prevLayers;
@@ -149,6 +135,22 @@ export function useLayers() {
       const temp = newLayers[index];
       newLayers[index] = newLayers[index - 1];
       newLayers[index - 1] = temp;
+      
+      return newLayers;
+    });
+  }, []);
+  
+  // Move layer down in the stack (earlier in the array = lower in the stack)
+  // Note: In our UI, "down" means visually lower in the stack (higher index in array)
+  const moveLayerDown = useCallback((layerId: string) => {
+    setLayers((prevLayers) => {
+      const index = prevLayers.findIndex((layer) => layer.id === layerId);
+      if (index === -1 || index === prevLayers.length - 1) return prevLayers;
+      
+      const newLayers = [...prevLayers];
+      const temp = newLayers[index];
+      newLayers[index] = newLayers[index + 1];
+      newLayers[index + 1] = temp;
       
       return newLayers;
     });

@@ -252,6 +252,12 @@ export function useCanvasEditor() {
     });
   }, [addLayer, setActiveLayerId, layers.length]);
 
+  const handleCanvasClick = useCallback((x: number, y: number) => {
+    if (activeLayerId) {
+      setLayerPosition(activeLayerId, x, y);
+    }
+  }, [activeLayerId, setLayerPosition]);
+
   const resetEdits = useCallback(() => {
     if (activeLayerId) {
       const resetAdjustments = {...DEFAULT_ADJUSTMENTS};
@@ -276,13 +282,6 @@ export function useCanvasEditor() {
     link.click();
     document.body.removeChild(link);
   }, []);
-
-  // Set a layer's position when the canvas is clicked
-  const handleCanvasClick = useCallback((x: number, y: number) => {
-    if (activeLayerId) {
-      setLayerPosition(activeLayerId, x, y);
-    }
-  }, [activeLayerId, setLayerPosition]);
 
   return {
     canvasRef,
@@ -312,6 +311,8 @@ export function useCanvasEditor() {
     moveLayerUp,
     moveLayerDown,
     setLayerOpacity,
+    setLayerPosition,
+    setLayerScale,
     handleCanvasClick,
   };
 }

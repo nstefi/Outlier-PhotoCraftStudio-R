@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { ImageInfo, ImageAdjustments, ImageFilter, BlendMode } from "@shared/schema";
 import Header from "@/components/Layout/Header";
 import Footer from "@/components/Layout/Footer";
@@ -8,6 +8,7 @@ import FilterControls from "@/components/Editor/FilterControls";
 import AdjustmentControls from "@/components/Editor/AdjustmentControls";
 import LayerList from "@/components/Editor/LayerList";
 import BlendModeControls from "@/components/Editor/BlendModeControls";
+import ResizeControls from "@/components/Editor/ResizeControls";
 import LoadingOverlay from "@/components/Layout/LoadingOverlay";
 import { useCanvasEditor } from "@/hooks/use-canvas-editor";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,8 @@ export default function Home() {
     moveLayerDown,
     setLayerOpacity,
     handleCanvasClick,
+    setLayerPosition,
+    setLayerScale,
   } = useCanvasEditor();
 
   // Step 4: Define handler functions after all hooks
@@ -98,6 +101,12 @@ export default function Home() {
     resetEdits();
   };
 
+  const handleCanvasDrag = useCallback((x: number, y: number) => {
+    if (activeLayerId && setLayerPosition) {
+      setLayerPosition(activeLayerId, x, y);
+    }
+  }, [activeLayerId, setLayerPosition]);
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header onDownload={downloadImage} canDownload={canDownload} />
@@ -129,7 +138,8 @@ export default function Home() {
                     width={canvasWidth} 
                     height={canvasHeight}
                     layers={layers}
-                    onCanvasClick={handleCanvasClick}
+                    onCanvasClick={handleCanvasDrag}
+                    onDrag={handleCanvasDrag}
                   />
                 </div>
                 {imageInfo && (
@@ -194,6 +204,10 @@ export default function Home() {
                           onBlendModeChange={(mode) => setLayerBlendMode(activeLayerId!, mode)}
                         />
                       )}
+                      <ResizeControls
+                        layer={activeLayer}
+                        onScaleChange={(scale) => setLayerScale(activeLayerId!, scale)}
+                      />
                       <AdjustmentControls 
                         adjustments={adjustments} 
                         onAdjustmentChange={setAdjustments} 

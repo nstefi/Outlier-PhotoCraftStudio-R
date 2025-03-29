@@ -7,25 +7,37 @@ interface CanvasProps {
   width?: number;
   height?: number;
   onCanvasClick?: (x: number, y: number) => void;
+  onDrag?: (x: number, y: number) => void;
 }
 
 const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
-  ({ className = "", layers = [], width = 800, height = 600, onCanvasClick }, ref) => {
+  ({ className = "", layers = [], width = 800, height = 600, onCanvasClick, onDrag }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [isDragging, setIsDragging] = useState(false);
-    const dragStartPositionRef = useRef({ x: 0, y: 0 });
+    const dragStartRef = useRef({ x: 0, y: 0 });
+    const dragOffsetRef = useRef({ x: 0, y: 0 });
+    const lastDragTimeRef = useRef(0);
     
     useEffect(() => {
-      // Set up canvas interaction handlers for drag and drop
       const canvas = canvasRef.current;
-      if (canvas && onCanvasClick) {
+      if (canvas && (onCanvasClick || onDrag)) {
         const handleMouseDown = (e: MouseEvent) => {
-          setIsDragging(true);
           const rect = canvas.getBoundingClientRect();
-          dragStartPositionRef.current = {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
+          const mouseX = e.clientX - rect.left;
+          const mouseY = e.clientY - rect.top;
+          
+          // Find the active layer
+          const activeLayer = layers.find(layer => layer.visible);
+          if (!activeLayer) return;
+          
+          // Calculate the offset between mouse position and layer position
+          dragOffsetRef.current = {
+            x: mouseX - activeLayer.position.x,
+            y: mouseY - activeLayer.position.y
           };
+          
+          dragStartRef.current = { x: mouseX, y: mouseY };
+          setIsDragging(true);
           
           // Change cursor to indicate dragging
           canvas.style.cursor = 'grabbing';
@@ -35,22 +47,38 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         };
         
         const handleMouseMove = (e: MouseEvent) => {
-          if (!isDragging) return;
+          if (!isDragging || !onDrag) return;
           
-          // We don't update position during drag to prevent excessive rerenders
-          // Just show a visual indicator that dragging is happening
-          // Final position will be set on mouse up
+          const rect = canvas.getBoundingClientRect();
+          const mouseX = e.clientX - rect.left;
+          const mouseY = e.clientY - rect.top;
+          
+          // Calculate new position considering the initial offset
+          const newX = mouseX - dragOffsetRef.current.x;
+          const newY = mouseY - dragOffsetRef.current.y;
+          
+          // Update position in real-time
+          onDrag(newX, newY);
         };
         
         const handleMouseUp = (e: MouseEvent) => {
           if (!isDragging) return;
           
           const rect = canvas.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
+          const mouseX = e.clientX - rect.left;
+          const mouseY = e.clientY - rect.top;
           
-          // Only call the position change handler on mouse up
-          onCanvasClick(x, y);
+          // Calculate final position considering the offset
+          const finalX = mouseX - dragOffsetRef.current.x;
+          const finalY = mouseY - dragOffsetRef.current.y;
+          
+          // Call the click handler on mouse up to finalize the position
+          if (onCanvasClick) {
+            onCanvasClick(finalX, finalY);
+          }
+          
+          // Store the time of the last drag
+          lastDragTimeRef.current = Date.now();
           
           // Reset dragging state
           setIsDragging(false);
@@ -58,13 +86,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
         };
         
         const handleClick = (e: MouseEvent) => {
-          // Don't trigger click events if we were dragging
-          if (isDragging) return;
+          // Don't trigger click events if we were dragging or just finished dragging
+          if (isDragging || (Date.now() - lastDragTimeRef.current < 100)) return;
           
           const rect = canvas.getBoundingClientRect();
           const x = e.clientX - rect.left;
           const y = e.clientY - rect.top;
-          onCanvasClick(x, y);
+          onCanvasClick?.(x, y);
         };
         
         // Set initial cursor
@@ -84,7 +112,7 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           canvas.removeEventListener('click', handleClick);
         };
       }
-    }, [onCanvasClick, isDragging]);
+    }, [onCanvasClick, onDrag, isDragging, layers]);
     
     // Forward the ref
     useEffect(() => {
@@ -98,9 +126,13 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     return (
       <canvas
         ref={canvasRef}
+        className={className}
         width={width}
         height={height}
-        className={`max-w-full max-h-[70vh] object-contain ${className} ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        style={{
+          cursor: isDragging ? 'grabbing' : 'grab',
+          touchAction: 'none', // Prevent scrolling on touch devices
+        }}
       />
     );
   }

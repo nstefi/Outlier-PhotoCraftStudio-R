@@ -131,8 +131,8 @@ export default function Home() {
                   </Button>
                 </div>
               </div>
-              <div className="bg-white rounded-lg shadow p-4 max-w-4xl mx-auto">
-                <div className="flex items-center justify-center bg-gray-100 rounded-md min-h-[300px]">
+              <div className="bg-white rounded-lg shadow p-4 max-w-full mx-auto h-full">
+                <div className="flex items-center justify-center bg-gray-100 rounded-md min-h-[600px] w-full h-[calc(100vh-200px)]">
                   <Canvas 
                     ref={canvasRef} 
                     width={canvasWidth} 
@@ -140,6 +140,7 @@ export default function Home() {
                     layers={layers}
                     onCanvasClick={handleCanvasDrag}
                     onDrag={handleCanvasDrag}
+                    className="w-full h-full"
                   />
                 </div>
                 {imageInfo && (

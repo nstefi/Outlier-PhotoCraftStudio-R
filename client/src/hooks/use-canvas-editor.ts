@@ -195,31 +195,36 @@ export function useCanvasEditor() {
         info.width = img.width;
         info.height = img.height;
         
-        // Calculate canvas size
-        const maxWidth = Math.min(window.innerWidth * 0.8, img.width);
-        const maxHeight = Math.min(window.innerHeight * 0.6, img.height);
+        // Calculate canvas size based on container dimensions
+        const maxWidth = window.innerWidth * 0.85; // Reduced to account for sidebar
+        const maxHeight = window.innerHeight * 0.75; // Adjusted to leave space for header/footer
         
-        let width = img.width;
-        let height = img.height;
+        // Calculate container aspect ratio and image aspect ratio
+        const containerAspectRatio = maxWidth / maxHeight;
+        const imageAspectRatio = img.width / img.height;
         
-        if (width > maxWidth) {
-          const ratio = maxWidth / width;
+        let width, height;
+        
+        if (imageAspectRatio > containerAspectRatio) {
+          // Image is more "landscape" than the container
           width = maxWidth;
-          height = height * ratio;
+          height = maxWidth / imageAspectRatio;
+        } else {
+          // Image is more "portrait" than the container
+          height = maxHeight;
+          width = maxHeight * imageAspectRatio;
         }
         
-        if (height > maxHeight) {
-          const ratio = maxHeight / height;
-          height = maxHeight;
-          width = width * ratio;
-        }
+        // Calculate the final dimensions
+        const finalWidth = Math.round(width);
+        const finalHeight = Math.round(height);
         
         // Set canvas dimensions
-        setCanvasWidth(width);
-        setCanvasHeight(height);
+        setCanvasWidth(finalWidth);
+        setCanvasHeight(finalHeight);
         if (canvasRef.current) {
-          canvasRef.current.width = width;
-          canvasRef.current.height = height;
+          canvasRef.current.width = finalWidth;
+          canvasRef.current.height = finalHeight;
         }
         
         // Store the original image

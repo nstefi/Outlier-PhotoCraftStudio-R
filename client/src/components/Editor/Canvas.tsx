@@ -126,12 +126,16 @@ const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
     return (
       <canvas
         ref={canvasRef}
-        className={className}
+        className={`w-full h-full object-contain ${className}`}
         width={width}
         height={height}
         style={{
           cursor: isDragging ? 'grabbing' : 'grab',
           touchAction: 'none', // Prevent scrolling on touch devices
+          maxWidth: '100%',
+          maxHeight: '100%',
+          display: 'block', // Remove any extra space
+          margin: 'auto', // Center the canvas
         }}
       />
     );
